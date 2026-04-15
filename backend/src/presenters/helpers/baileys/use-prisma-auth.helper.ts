@@ -4,6 +4,26 @@ import { initAuthCreds } from "@whiskeysockets/baileys";
 import type { AuthenticationCreds } from "@whiskeysockets/baileys";
 import { SessionKeyRepository } from "../../../infrastructure/external/baileys/session-key.repository.js";
 import SessionRepository from "../../../infrastructure/external/baileys/baileys-session.repository.js";
+import {
+  deserializeBaileysData,
+  serializeBaileysData,
+} from "./baileys-auth-state.helper.js";
+
+function hasValidSignalKeyPair(keyPair: unknown): boolean {
+  return !!keyPair
+    && typeof keyPair === "object"
+    && "private" in keyPair
+    && Buffer.isBuffer(keyPair.private)
+    && "public" in keyPair
+    && Buffer.isBuffer(keyPair.public);
+}
+
+function isValidCreds(creds: AuthenticationCreds): boolean {
+  return hasValidSignalKeyPair(creds.noiseKey)
+    && hasValidSignalKeyPair(creds.signedIdentityKey)
+    && hasValidSignalKeyPair(creds.pairingEphemeralKeyPair)
+    && typeof creds.advSecretKey === "string";
+}
 
 
 export async function usePrismaAuth(sessionName: string) {
@@ -16,11 +36,17 @@ export async function usePrismaAuth(sessionName: string) {
     session = await sessionRepo.create(sessionName, {});
   }
 
-  // 🔥 garante tipagem correta + evita sessão quebrada
-  const creds: AuthenticationCreds =
-    session.creds && Object.keys(session.creds as object).length > 0
-      ? (session.creds as unknown as AuthenticationCreds)
-      : initAuthCreds();
+  const storedCreds = session.creds && Object.keys(session.creds as object).length > 0
+    ? deserializeBaileysData(session.creds as unknown as AuthenticationCreds)
+    : null;
+
+  const creds: AuthenticationCreds = storedCreds && isValidCreds(storedCreds)
+    ? storedCreds
+    : initAuthCreds();
+
+  if (storedCreds && !isValidCreds(storedCreds)) {
+    await sessionRepo.updateCreds(session.id, serializeBaileysData(creds));
+  }
 
   const state = {
     creds,
@@ -35,7 +61,7 @@ export async function usePrismaAuth(sessionName: string) {
   };
 
   const saveCreds = async () => {
-    await sessionRepo.updateCreds(session!.id, state.creds);
+    await sessionRepo.updateCreds(session!.id, serializeBaileysData(state.creds));
   };
 
   return { state, saveCreds };

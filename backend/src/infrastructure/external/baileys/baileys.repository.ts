@@ -24,7 +24,6 @@ export default class BaileysRepository implements SocketContract {
 
     this.socket = makeWASocket({
       version,
-      printQRInTerminal: true,
       auth: state
     });
 

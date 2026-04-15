@@ -1,4 +1,8 @@
 import { prisma } from "../../../database/prisma.js";
+import {
+  deserializeBaileysKey,
+  serializeBaileysData,
+} from "../../../presenters/helpers/baileys/baileys-auth-state.helper.js";
 
 type KeyData = Record<string, Record<string, any>>;
 
@@ -16,7 +20,7 @@ export class SessionKeyRepository {
     const result: Record<string, any> = {};
 
     for (const row of rows) {
-      result[row.keyId] = row.value;
+      result[row.keyId] = deserializeBaileysKey(type, row.value);
     }
 
     return result;
@@ -29,6 +33,20 @@ export class SessionKeyRepository {
       for (const keyId in data[type]) {
         const value = data[type][keyId];
 
+        if (!value) {
+          queries.push(
+            prisma.sessionKey.deleteMany({
+              where: {
+                sessionId,
+                type,
+                keyId,
+              },
+            })
+          );
+
+          continue;
+        }
+
         queries.push(
           prisma.sessionKey.upsert({
             where: {
@@ -39,13 +57,13 @@ export class SessionKeyRepository {
               }
             },
             update: {
-              value
+              value: serializeBaileysData(value)
             },
             create: {
               sessionId,
               type,
               keyId,
-              value
+              value: serializeBaileysData(value)
             }
           })
         );
