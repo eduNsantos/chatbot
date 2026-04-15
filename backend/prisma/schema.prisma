@@ -1,0 +1,35 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Get a free hosted Postgres database in seconds: `npx create-db`
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+}
+
+
+model Session {
+  id           String   @id @default(uuid())
+  sessionName  String   @unique
+  creds        Json
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  keys SessionKey[]
+}
+
+model SessionKey {
+  id        Int    @id @default(autoincrement())
+  sessionId String
+  type      String
+  keyId     String
+  value     Json
+
+  session Session @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+
+  @@unique([sessionId, type, keyId])
+}
