@@ -7,7 +7,7 @@ import SessionRepository from "../../../infrastructure/external/baileys/baileys-
 import {
   deserializeBaileysData,
   serializeBaileysData,
-} from "../../../modules/session/infrastructure/external/baileys/helpers/baileys-auth-state.helper.js";
+} from "../../../modules/session/infrastructure/gateway/helpers/baileys-auth-state.helper.js";
 
 function hasValidSignalKeyPair(keyPair: unknown): boolean {
   return !!keyPair

@@ -1,8 +1,8 @@
-import { prisma } from "../../../../../database/prisma.js";
+import { prisma } from "../../../../database/prisma.js";
 import type { Session } from "@prisma/client";
-import type SessionContract from "../../../contracts/session.contract.js";
+import type SessionRepositoryContract from "../../contracts/session-repository.contract.js";
 
-export default class BaileysSessionRepository implements SessionContract {
+export default class BaileysSessionRepository implements SessionRepositoryContract {
   async findByName(sessionName: string): Promise<Session | null> {
     return prisma.session.findUnique({
       where: { sessionName }

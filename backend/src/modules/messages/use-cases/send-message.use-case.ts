@@ -1,15 +1,10 @@
-import type SocketContract from "../../../domain/socket/socket.contract.js";
+import type WhatsappGatewayContract from "../../session/contracts/whatsapp-gateway.contract.js";
 
 export default class SendMessageUseCase {
-    constructor(private socketRepository: SocketContract) {
-        this.socketRepository = socketRepository;
-    }
+    constructor(private whatsappGateway: WhatsappGatewayContract) {}
 
     async execute(to: string, message: string) {
-        // Lógica para enviar a mensagem usando Baileys ou outra biblioteca
-        console.log(`Enviando mensagem para ${to}: ${message}`);
-
-        this.socketRepository.sendMessage(to, message);
+        await this.whatsappGateway.sendMessage(to, message);
         // Simulação de envio de mensagem
         return { success: true, to, message };
     }

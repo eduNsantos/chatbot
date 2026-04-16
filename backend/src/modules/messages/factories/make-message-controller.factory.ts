@@ -1,10 +1,12 @@
 import SendMessageUseCase from "../use-cases/send-message.use-case.js";
 import MessageController from "../controllers/message.controller.js";
-import { socketRepository } from "../../../server.js";
+import { makeSessionDependencies } from "../../session/factories/make-session-dependencies.js";
 
-export default class MakeMessageControllerFactory {
-  static create() {
-    const useCase = new SendMessageUseCase(socketRepository);
+
+export default function makeMessageController(): MessageController {
+    const { whatsappGateway } = makeSessionDependencies();
+
+    const useCase = new SendMessageUseCase(whatsappGateway);
+
     return new MessageController(useCase);
-  }
 }

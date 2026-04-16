@@ -6,8 +6,8 @@ import {
   deserializeBaileysData,
   serializeBaileysData,
 } from "./baileys-auth-state.helper.js";
-import BaileysSessionRepository from "../baileys-session.repository.js";
-import { BaileysSessionKeyRepository } from "../baileys-session-key.repository.js";
+import BaileysSessionRepository from "../../repositories/baileys-session.repository.js";
+import { BaileysSessionKeyRepository } from "../../repositories/baileys-session-key.repository.js";
 
 function hasValidSignalKeyPair(keyPair: unknown): boolean {
   return !!keyPair

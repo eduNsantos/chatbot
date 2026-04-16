@@ -1,12 +1,11 @@
 import type { FastifyInstance } from 'fastify';
 import { messageRoutes } from '../../messages/routes/message.routes.js';
-import MakeSessionControllerFactory from '../factories/make-session-controller.js';
+import { makeSessionController } from '../factories/make-session-controller.factory.js';
 
 
 export async function sessionRoutes(fastify: FastifyInstance) {
-  const sessionController = MakeSessionControllerFactory.create();
+  const sessionController = makeSessionController();
 
-  // GET /sessions
   fastify.get('/', sessionController.listSessions.bind(sessionController));
 
   fastify.register(messageRoutes, {

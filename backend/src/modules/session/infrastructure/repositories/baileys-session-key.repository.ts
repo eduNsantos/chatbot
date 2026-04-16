@@ -1,11 +1,12 @@
-import { prisma } from "../../../../../database/prisma.js";
-import { deserializeBaileysKey, serializeBaileysData } from "./helpers/baileys-auth-state.helper.js";
+import { prisma } from "../../../../database/prisma.js";
+import type SessionKeyRepositoryContract from "../../contracts/session-key-repository.contract.js";
+import { deserializeBaileysKey, serializeBaileysData } from "../gateway/helpers/baileys-auth-state.helper.js";
 
 type KeyData = Record<string, Record<string, any>>;
 
-export class BaileysSessionKeyRepository {
+export class BaileysSessionKeyRepository implements SessionKeyRepositoryContract {
 
-  async get(sessionId: string, type: string, ids: string[]) {
+  async get(sessionId: string, type: string, ids: string[]): Promise<Record<string, any>> {
     const rows = await prisma.sessionKey.findMany({
       where: {
         sessionId,
@@ -23,7 +24,7 @@ export class BaileysSessionKeyRepository {
     return result;
   }
 
-  async set(sessionId: string, data: KeyData) {
+  async set(sessionId: string, data: KeyData): Promise<void> {
     const queries: any[] = [];
 
     for (const type in data) {
@@ -72,7 +73,7 @@ export class BaileysSessionKeyRepository {
     }
   }
 
-  async deleteBySession(sessionId: string) {
+  async deleteBySession(sessionId: string): Promise<void> {
     await prisma.sessionKey.deleteMany({
       where: { sessionId }
     });

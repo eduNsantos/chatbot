@@ -6,19 +6,20 @@ import makeWASocket, {
 
 import qrcode from 'qrcode-terminal';
 import { usePrismaAuth } from "./helpers/use-prisma-auth.helper.js";
+import type WhatsappGatewayContract from "../../contracts/whatsapp-gateway.contract.js";
 
-export default class BaileysRepository implements SocketContract {
+export default class BaileysWhatsappGateway implements WhatsappGatewayContract {
 
   private socket: WASocket | null = null;
   private isConnected = false;
 
-  public async initSession(): Promise<void> {
+  public async createSession(sessionName: string): Promise<void> {
 
     if (this.socket) {
       return;
     }
 
-    const { state, saveCreds } = await usePrismaAuth("default-session");
+    const { state, saveCreds } = await usePrismaAuth(sessionName);
 
     const { version } = await fetchLatestBaileysVersion();
 
@@ -58,7 +59,7 @@ export default class BaileysRepository implements SocketContract {
         if (shouldReconnect) {
           console.log('🔄 Reconectando...');
           this.socket = null;
-          await this.initSession();
+          await this.createSession(sessionName);
         } else {
           console.log('🚪 Sessão desconectada (logout)');
         }
@@ -83,8 +84,9 @@ export default class BaileysRepository implements SocketContract {
 
   // 🚀 enviar mensagem
   public async sendMessage(to: string, text: string) {
+    console.log(`this.socket: ${this.socket}, this.isConnected: ${this.isConnected}`);
     if (!this.socket || !this.isConnected) {
-      throw new Error('Socket não conectado');
+      throw new Error('SOCKET_NOT_CONNECTED');
     }
 
     await this.socket.sendMessage(to, { text });
