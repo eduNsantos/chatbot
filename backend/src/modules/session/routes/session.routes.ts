@@ -7,9 +7,8 @@ export async function sessionRoutes(fastify: FastifyInstance) {
   const sessionController = makeSessionController();
 
   fastify.get('/', sessionController.listSessions.bind(sessionController));
+  fastify.put('/:session_id', sessionController.updateSession.bind(sessionController));
 
-  fastify.register(messageRoutes, {
-    prefix: '/:session_id'
-  });
+  fastify.register(messageRoutes, { prefix: '/:session_id/message' });
 }
 

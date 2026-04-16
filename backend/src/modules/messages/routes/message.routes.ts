@@ -5,6 +5,6 @@ export async function messageRoutes(fastify: FastifyInstance) {
   const messageController = makeMessageController();
 
   // POST /message
-  fastify.post('/message', messageController.sendMessage.bind(messageController));
+  fastify.post('/', messageController.sendMessage.bind(messageController));
 }
 
