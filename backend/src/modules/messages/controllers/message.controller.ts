@@ -1,5 +1,5 @@
 import type { FastifyReply, FastifyRequest } from "fastify";
-import type SendMessageUseCase from "../../../../application/message/use-cases/send-message.use-case.js";
+import type SendMessageUseCase from "../use-cases/send-message.use-case.js";
 
 export default class MessageController {
     public constructor(private sendMessageUseCase: SendMessageUseCase) {

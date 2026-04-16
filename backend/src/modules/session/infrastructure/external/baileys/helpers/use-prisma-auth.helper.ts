@@ -2,12 +2,12 @@
 
 import { initAuthCreds } from "@whiskeysockets/baileys";
 import type { AuthenticationCreds } from "@whiskeysockets/baileys";
-import { SessionKeyRepository } from "../../../infrastructure/external/baileys/session-key.repository.js";
-import SessionRepository from "../../../infrastructure/external/baileys/baileys-session.repository.js";
 import {
   deserializeBaileysData,
   serializeBaileysData,
-} from "../../../modules/session/infrastructure/external/baileys/helpers/baileys-auth-state.helper.js";
+} from "./baileys-auth-state.helper.js";
+import BaileysSessionRepository from "../baileys-session.repository.js";
+import { BaileysSessionKeyRepository } from "../baileys-session-key.repository.js";
 
 function hasValidSignalKeyPair(keyPair: unknown): boolean {
   return !!keyPair
@@ -27,8 +27,8 @@ function isValidCreds(creds: AuthenticationCreds): boolean {
 
 
 export async function usePrismaAuth(sessionName: string) {
-  const sessionRepo = new SessionRepository();
-  const keyRepo = new SessionKeyRepository();
+  const sessionRepo = new BaileysSessionRepository();
+  const keyRepo = new BaileysSessionKeyRepository();
 
   let session = await sessionRepo.findByName(sessionName);
 

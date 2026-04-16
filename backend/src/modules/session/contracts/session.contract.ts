@@ -5,4 +5,6 @@ export default interface SessionContract {
     create(sessionName: string, creds: any): Promise<any>;
     updateCreds(sessionId: string, creds: any): Promise<void>;
     delete(sessionId: string): Promise<void>;
+    // initSession(): Promise<void>;
+    // sendMessage(to: string, message: string): Promise<void>;
 }

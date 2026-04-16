@@ -5,8 +5,7 @@ import makeWASocket, {
 } from "@whiskeysockets/baileys";
 
 import qrcode from 'qrcode-terminal';
-import type SocketContract from "../../../domain/socket/socket.contract.js";
-import { usePrismaAuth } from "../../../presenters/helpers/baileys/use-prisma-auth.helper.js";
+import { usePrismaAuth } from "./helpers/use-prisma-auth.helper.js";
 
 export default class BaileysRepository implements SocketContract {
 

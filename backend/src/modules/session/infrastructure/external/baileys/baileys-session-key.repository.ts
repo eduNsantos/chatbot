@@ -1,12 +1,9 @@
-import { prisma } from "../../../database/prisma.js";
-import {
-  deserializeBaileysKey,
-  serializeBaileysData,
-} from "../../../presenters/helpers/baileys/baileys-auth-state.helper.js";
+import { prisma } from "../../../../../database/prisma.js";
+import { deserializeBaileysKey, serializeBaileysData } from "./helpers/baileys-auth-state.helper.js";
 
 type KeyData = Record<string, Record<string, any>>;
 
-export class SessionKeyRepository {
+export class BaileysSessionKeyRepository {
 
   async get(sessionId: string, type: string, ids: string[]) {
     const rows = await prisma.sessionKey.findMany({

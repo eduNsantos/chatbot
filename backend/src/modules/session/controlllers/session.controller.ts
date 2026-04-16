@@ -1,5 +1,5 @@
 import type { FastifyReply, FastifyRequest } from "fastify";
-import type SessionsListUseCase from "../../../../application/session/use-cases/sessions-list.use-case.js";
+import type SessionsListUseCase from "../use-cases/sessions-list.use-case.js";
 
 export default class SessionController {
     public constructor(private sessionsListUseCase: SessionsListUseCase) {
