@@ -1,6 +1,7 @@
 import makeWASocket, {
   DisconnectReason,
-  fetchLatestBaileysVersion
+  fetchLatestBaileysVersion,
+  type WASocket
 } from "@whiskeysockets/baileys";
 
 import qrcode from 'qrcode-terminal';
@@ -9,7 +10,7 @@ import { usePrismaAuth } from "../../../presenters/helpers/baileys/use-prisma-au
 
 export default class BaileysRepository implements SocketContract {
 
-  private socket: any;
+  private socket: WASocket | null = null;
   private isConnected = false;
 
   public async initSession(): Promise<void> {
