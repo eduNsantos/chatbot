@@ -2,6 +2,8 @@ import type { FastifyReply, FastifyRequest } from "fastify";
 import type SessionsListUseCase from "../use-cases/sessions-list.use-case.js";
 import SessionUpdateDto from "../dtos/session-update.dto.js";
 import type SessionUpdateUseCase from "../use-cases/session-update.use-case.js";
+import type { UpdateSessionRequest } from "../@types/session.types.js";
+
 
 export default class SessionController {
     public constructor(
@@ -15,8 +17,8 @@ export default class SessionController {
         return reply.send(sessions);
     }
 
-    async updateSession(req: FastifyRequest, reply: FastifyReply) {
-        if (!req?.params?.session_id) {
+    async updateSession(req: UpdateSessionRequest, reply: FastifyReply) {
+        if (!req?.params?.sessionId) {
             return reply.status(400).send({ error: "Missing session ID" });
         }
 
@@ -25,11 +27,11 @@ export default class SessionController {
         }
 
         const sessionUpdateDto = new SessionUpdateDto(
-            req.params.session_id,
+            req.params.sessionId,
             req.body.sessionName
         );
 
-        const sessions = await this.sessionUpdateUseCase.execute(sessionUpdateDto );
+        const sessions = await this.sessionUpdateUseCase.execute(sessionUpdateDto);
 
         return reply.send(sessions);
     }

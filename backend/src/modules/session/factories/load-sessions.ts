@@ -12,13 +12,13 @@ export default async function loadSessions() {
     }
 
     sessions.forEach(session => {
-        if (!session.sessionName) {
-            console.warn(`Session with ID ${session.id} has no sessionName. Skipping.`);
+        if (!session.id) {
+            console.warn(`Session with ID ${session.id} has no sessionId. Skipping.`);
             return;
         }
 
-        whatsappGateway.createSession(session.sessionName).catch(err => {
-            console.error(`Failed to create session ${session.sessionName}:`, err);
+        whatsappGateway.createSession(session.id).catch(err => {
+            console.error(`Failed to create session ${session.id}:`, err);
         });
     });
 }

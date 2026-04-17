@@ -1,14 +1,20 @@
 import type { FastifyReply, FastifyRequest } from "fastify";
 import type SendMessageUseCase from "../use-cases/send-message.use-case.js";
+import type { SendMessageRequest } from "../@types/message.types.js";
+import SendMessageDto from "../dtos/send-message.dto.js";
 
 export default class MessageController {
     public constructor(private sendMessageUseCase: SendMessageUseCase) {}
 
-    async sendMessage(req: FastifyRequest, res: FastifyReply) {
-        const { to, message } = req.body as { to: string, message: string };
-
+    async sendMessage(req: SendMessageRequest, res: FastifyReply) {
         try {
-            const result = await this.sendMessageUseCase.execute(to, message);
+            const { to, type, message } = req.body;
+            const { sessionId } = req.params;
+
+
+            const sendMessageDto = new SendMessageDto(sessionId, to, type, message);
+
+            const result = await this.sendMessageUseCase.execute(sendMessageDto);
 
             return res.send(result);
         } catch (error: Error | any) {

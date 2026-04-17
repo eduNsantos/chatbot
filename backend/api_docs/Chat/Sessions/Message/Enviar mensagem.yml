@@ -11,7 +11,7 @@ http:
     data: |-
       {
         "to": "5511954318786@s.whatsapp.net",
-        "message": Como você está?"
+        "message": "Como você está?"
       }
   auth: inherit
 

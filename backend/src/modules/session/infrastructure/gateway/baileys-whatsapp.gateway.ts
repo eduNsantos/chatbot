@@ -8,31 +8,36 @@ import qrcode from 'qrcode-terminal';
 import { usePrismaAuth } from "./helpers/use-prisma-auth.helper.js";
 import type WhatsappGatewayContract from "../../contracts/whatsapp-gateway.contract.js";
 
+
+interface ExtendedWASocket extends WASocket {
+  id: string;
+  isConnected?: boolean;
+}
+
 export default class BaileysWhatsappGateway implements WhatsappGatewayContract {
 
-  private socket: WASocket | null = null;
-  private isConnected = false;
+  private sockets: ExtendedWASocket[] = [];
 
-  public async createSession(sessionName: string): Promise<void> {
+  public async createSession(sessionId: string): Promise<void> {
 
-    if (this.socket) {
+    if (this.sockets.find(s => s.id === sessionId)) {
       return;
     }
 
-    const { state, saveCreds } = await usePrismaAuth(sessionName);
+    const { state, saveCreds } = await usePrismaAuth(sessionId);
 
     const { version } = await fetchLatestBaileysVersion();
 
-    this.socket = makeWASocket({
+    const socket = makeWASocket({
       version,
       auth: state
-    });
+    }) as ExtendedWASocket;
 
     // 🔥 persistência
-    this.socket.ev.on('creds.update', saveCreds);
+    socket.ev.on('creds.update', saveCreds);
 
     // 🔥 conexão
-    this.socket.ev.on('connection.update', async (update: any) => {
+    socket.ev.on('connection.update', async (update: any) => {
       const { connection, lastDisconnect, qr } = update;
 
       if (qr) {
@@ -42,12 +47,12 @@ export default class BaileysWhatsappGateway implements WhatsappGatewayContract {
       }
 
       if (connection === 'open') {
-        this.isConnected = true;
+        socket.isConnected = true;
         console.log('✅ Conectado ao WhatsApp');
       }
 
       if (connection === 'close') {
-        this.isConnected = false;
+        socket.isConnected = false;
 
         const statusCode = (lastDisconnect?.error as any)?.output?.statusCode;
 
@@ -58,16 +63,15 @@ export default class BaileysWhatsappGateway implements WhatsappGatewayContract {
 
         if (shouldReconnect) {
           console.log('🔄 Reconectando...');
-          this.socket = null;
-          await this.createSession(sessionName);
+          this.sockets = this.sockets.filter(s => s.id !== sessionId);
+          await this.createSession(sessionId);
         } else {
           console.log('🚪 Sessão desconectada (logout)');
         }
       }
     });
 
-    // 🔥 mensagens recebidas
-    this.socket.ev.on('messages.upsert', async (msg: any) => {
+    socket.ev.on('messages.upsert', async (msg: any) => {
       const message = msg.messages?.[0];
 
       if (!message?.message) return;
@@ -80,15 +84,22 @@ export default class BaileysWhatsappGateway implements WhatsappGatewayContract {
 
       console.log(`📩 ${from}: ${text}`);
     });
+
+    socket.id = sessionId;
+    this.sockets.push(socket);
+
   }
 
   // 🚀 enviar mensagem
-  public async sendMessage(to: string, text: string) {
-    console.log(`this.socket: ${this.socket}, this.isConnected: ${this.isConnected}`);
-    if (!this.socket || !this.isConnected) {
+  public async sendMessage(sessionId: string, to: string, type: 'person' | 'group', message: string) {
+    const socket = this.sockets.find(s => s.id === sessionId);
+
+    console.log(this.sockets, socket, sessionId)
+
+    if (!socket || !socket.isConnected) {
       throw new Error('SOCKET_NOT_CONNECTED');
     }
 
-    await this.socket.sendMessage(to, { text });
+    await socket.sendMessage(to, { text: message });
   }
 }

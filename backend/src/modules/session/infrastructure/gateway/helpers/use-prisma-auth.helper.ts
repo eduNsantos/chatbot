@@ -26,14 +26,14 @@ function isValidCreds(creds: AuthenticationCreds): boolean {
 }
 
 
-export async function usePrismaAuth(sessionName: string) {
+export async function usePrismaAuth(sessionId: string) {
   const sessionRepo = new BaileysSessionRepository();
   const keyRepo = new BaileysSessionKeyRepository();
 
-  let session = await sessionRepo.findByName(sessionName);
+  let session = await sessionRepo.findById(sessionId);
 
   if (!session) {
-    session = await sessionRepo.create(sessionName, {});
+    session = await sessionRepo.create(sessionId, {});
   }
 
   const storedCreds = session.creds && Object.keys(session.creds as object).length > 0

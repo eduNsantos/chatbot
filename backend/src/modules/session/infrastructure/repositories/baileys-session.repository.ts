@@ -4,6 +4,12 @@ import type SessionRepositoryContract from "../../contracts/session-repository.c
 import type SessionUpdateDto from "../../dtos/session-update.dto.js";
 
 export default class BaileysSessionRepository implements SessionRepositoryContract {
+  async findById(sessionId: string): Promise<Session | null> {
+    return prisma.session.findUnique({
+      where: { id: sessionId }
+    });
+  }
+
   async findByName(sessionName: string): Promise<Session | null> {
     return prisma.session.findUnique({
       where: { sessionName }
@@ -13,12 +19,6 @@ export default class BaileysSessionRepository implements SessionRepositoryContra
   async findAll(): Promise<Partial<Session>[]> {
     return prisma.session.findMany({
       select: { id: true, sessionName: true, createdAt: true, updatedAt: true }
-    });
-  }
-
-  async findById(id: string): Promise<Session | null> {
-    return prisma.session.findUnique({
-      where: { id }
     });
   }
 

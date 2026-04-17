@@ -1,5 +1,5 @@
 export default interface WhatsappGatewayContract {
 
-    createSession(sessionName: string): Promise<void>;
-    sendMessage(to: string, message: string): Promise<void>;
+    createSession(sessionId: string): Promise<void>;
+    sendMessage(sessionId: string, to: string, type: 'person' | 'group', message: string): Promise<void>;
 }
