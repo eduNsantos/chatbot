@@ -2,5 +2,8 @@
   "dependencies": {
     "knex": "^3.2.9",
     "mysql": "^2.18.1"
+  },
+  "devDependencies": {
+    "vite": "^8.0.10"
   }
 }

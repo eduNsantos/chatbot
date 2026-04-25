@@ -12,6 +12,17 @@ services:
       - mysql
       - redis
     command: "npm run start:dev"
+
+  frontend:
+    image: node:20
+    volumes:
+      - ./frontend:/app
+    working_dir: /app
+    ports:
+      - "5173:5173"
+    # env_file: ./frontend/.env
+    command: "npm run dev"
+
   mysql:
     image: mysql:latest
     env_file: ./backend/.env
