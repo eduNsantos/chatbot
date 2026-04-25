@@ -11,6 +11,13 @@ export default class MessageController {
             const { to, type, message } = req.body;
             const { sessionId } = req.params;
 
+            if (!sessionId) {
+                return res.status(400).send({ error: 'Missing session ID' });
+            }
+
+            if (!to || !type || !message) {
+                return res.status(400).send({ error: 'Missing required fields: to, type, message' });
+            }
 
             const sendMessageDto = new SendMessageDto(sessionId, to, type, message);
 

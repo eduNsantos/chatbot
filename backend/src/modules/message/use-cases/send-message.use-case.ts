@@ -7,8 +7,18 @@ export default class SendMessageUseCase {
     async execute(dto: SendMessageDto) {
         const { sessionId, to, type, message } = dto;
 
-        await this.whatsappGateway.sendMessage(sessionId, to, type, message);
+        let formattedTo = to.replace(/\D/g, '');
 
-        return { success: true, to, type, message };
+        if (type === 'person') {
+            formattedTo = `${formattedTo}@s.whatsapp.net`
+        } else if (type === 'group') {
+            formattedTo = `${formattedTo}@g.us`
+        } else {
+            throw new Error('Invalid message type');
+        }
+
+        await this.whatsappGateway.sendMessage(sessionId, formattedTo, type, message);
+
+        return { success: true, to: formattedTo, type, message };
     }
 }
