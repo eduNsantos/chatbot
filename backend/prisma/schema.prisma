@@ -20,6 +20,8 @@ model Session {
   updatedAt    DateTime @updatedAt
 
   keys SessionKey[]
+  contacts Contact[]
+  messages Message[]
 }
 
 model SessionKey {
@@ -32,4 +34,41 @@ model SessionKey {
   session Session @relation(fields: [sessionId], references: [id], onDelete: Cascade)
 
   @@unique([sessionId, type, keyId])
+}
+
+
+model Contact {
+  id        Int    @id @default(autoincrement())
+  sessionId String
+  whatsappId      String
+  whatsappNumber     String?
+  pictureUrl         String?
+  name               String?
+  isGroup            Boolean  @default(false)
+
+  session Session @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  messages Message[]
+
+  @@unique([sessionId, whatsappId])
+}
+
+
+model Message {
+  id        Int    @id @default(autoincrement())
+  contactId Int
+  sessionId String
+  messageId String
+  type      String
+  content   String
+  rawPayload String? @db.LongText
+  mediaUrl String?
+  timestamp DateTime @default(now())
+  key String
+  isGroup Boolean @default(false)
+  fromMe Boolean @default(false)
+
+  contact Contact @relation(fields: [contactId], references: [id], onDelete: Cascade)
+  session Session @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+
+  @@unique([contactId, sessionId, messageId])
 }

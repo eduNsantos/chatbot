@@ -1,12 +1,17 @@
 import makeWASocket, {
   DisconnectReason,
   fetchLatestBaileysVersion,
+  type WAMessage,
   type WASocket
 } from "@whiskeysockets/baileys";
 
 import qrcode from 'qrcode-terminal';
 import { usePrismaAuth } from "./helpers/use-prisma-auth.helper.js";
 import type WhatsappGatewayContract from "../../contracts/whatsapp-gateway.contract.js";
+import type { BaileysWhatsappGatewayUpsertMessage } from "./@types/baileys-whatsapp-gateway.js";
+import FindOrCreateContactUseCase from "../../../contact/use-cases/find-or-create-contact.use-case.js";
+import CreateMessageUseCase from "../../../message/use-cases/create-message.use-case.js";
+import { safeJSONStringify } from "../../../../shared/utils/safe-json-stringify.js";
 
 
 interface ExtendedWASocket extends WASocket {
@@ -17,6 +22,68 @@ interface ExtendedWASocket extends WASocket {
 export default class BaileysWhatsappGateway implements WhatsappGatewayContract {
 
   private sockets: ExtendedWASocket[] = [];
+
+  constructor(
+    private findOrCreateContactUseCase: FindOrCreateContactUseCase,
+    private createMessageUseCase: CreateMessageUseCase
+  ) {}
+
+
+  async onMessageReceived(sessionId: string, event: BaileysWhatsappGatewayUpsertMessage): Promise<void> {
+    const message = event.messages?.[0] as WAMessage | undefined;
+
+    if (!message?.message) return;
+
+    const from = message.key.remoteJid || '';
+    const whatsappNumber = from.split('@')[0]?.toString() || '';
+
+    if (!from || !whatsappNumber) return;
+
+    const isGroup = from.endsWith('@g.us');
+
+    if (isGroup) {
+      console.log('Mensagem recebida em grupo, ignorando...');
+      return;
+    }
+
+    const me = message.key.fromMe;
+
+    // if (me) return;
+
+    const name = message.key.participant || message.pushName || '';
+
+    const contact = await this.findOrCreateContactUseCase.execute({
+      whatsappId: from,
+      name,
+      sessionId,
+      whatsappNumber
+    });
+
+    const text =
+      message.message.conversation ||
+      message.message.extendedTextMessage?.text;
+
+    if (!text) return;
+
+    const key = message.key.id;
+
+    console.log(message)
+
+    if (!key) return;
+
+    const parsedType = Object.keys(message.message)[0] || event.type;
+
+    await this.createMessageUseCase.execute({
+      contactId: contact.id,
+      sessionId,
+      type: parsedType,
+      message: text,
+      rawPayloadJson: safeJSONStringify(message),
+      isGroup,
+      key,
+      fromMe: false
+    });
+  }
 
   public async createSession(sessionId: string): Promise<void> {
 
@@ -33,10 +100,10 @@ export default class BaileysWhatsappGateway implements WhatsappGatewayContract {
       auth: state
     }) as ExtendedWASocket;
 
-    // 🔥 persistência
+    socket.id = sessionId;
+
     socket.ev.on('creds.update', saveCreds);
 
-    // 🔥 conexão
     socket.ev.on('connection.update', async (update: any) => {
       const { connection, lastDisconnect, qr } = update;
 
@@ -71,35 +138,31 @@ export default class BaileysWhatsappGateway implements WhatsappGatewayContract {
       }
     });
 
-    socket.ev.on('messages.upsert', async (msg: any) => {
-      const message = msg.messages?.[0];
-
-      if (!message?.message) return;
-
-      const from = message.key.remoteJid;
-
-      const text =
-        message.message.conversation ||
-        message.message.extendedTextMessage?.text;
-
-      console.log(`📩 ${from}: ${text}`);
+    socket.ev.on('messages.upsert', ev => {
+      void this.onMessageReceived(socket.id, ev);
     });
 
-    socket.id = sessionId;
+
     this.sockets.push(socket);
 
   }
 
-  // 🚀 enviar mensagem
-  public async sendMessage(sessionId: string, to: string, type: 'person' | 'group', message: string) {
+  public async sendMessage(sessionId: string, to: string, type: 'person' | 'group', message: string): Promise<{ messageKey: string }> {
     const socket = this.sockets.find(s => s.id === sessionId);
-
-    console.log(this.sockets, socket, sessionId)
 
     if (!socket || !socket.isConnected) {
       throw new Error('SOCKET_NOT_CONNECTED');
     }
 
-    await socket.sendMessage(to, { text: message });
+    const result = await socket.sendMessage(to, { text: message });
+    const messageKey = result?.key?.id;
+
+    console.log(result)
+
+    if (!messageKey) {
+      throw new Error('MESSAGE_KEY_NOT_FOUND');
+    }
+
+    return { messageKey };
   }
 }
