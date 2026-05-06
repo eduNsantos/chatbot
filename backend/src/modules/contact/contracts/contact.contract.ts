@@ -3,4 +3,5 @@ import type { FindOrCreateContactDTO } from "../dtos/find-or-create-contact.dto.
 
 export default interface ContactContract {
     findOrCreate(contact: FindOrCreateContactDTO): Promise<Contact>;
+    findAllBySessionId(sessionId: string): Promise<Contact[]>;
 }
