@@ -2,7 +2,7 @@ import type { FastifyReply, FastifyRequest } from "fastify";
 import type SessionsListUseCase from "../use-cases/sessions-list.use-case.js";
 import SessionUpdateDto from "../dtos/session-update.dto.js";
 import type SessionUpdateUseCase from "../use-cases/session-update.use-case.js";
-import type { UpdateSessionRequest } from "../@types/session.types.js";
+import type { UpdateSessionRequest } from "./session.types.js";
 
 
 export default class SessionController {

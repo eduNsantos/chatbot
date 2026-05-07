@@ -28,7 +28,6 @@ export default class BaileysWhatsappGateway implements WhatsappGatewayContract {
     private createMessageUseCase: CreateMessageUseCase
   ) {}
 
-
   async onMessageReceived(sessionId: string, event: BaileysWhatsappGatewayUpsertMessage): Promise<void> {
     const message = event.messages?.[0] as WAMessage | undefined;
 

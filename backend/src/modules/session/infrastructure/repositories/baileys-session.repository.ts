@@ -2,6 +2,7 @@ import { prisma } from "../../../../database/prisma.js";
 import type { Session } from "@prisma/client";
 import type SessionRepositoryContract from "../../contracts/session-repository.contract.js";
 import type SessionUpdateDto from "../../dtos/session-update.dto.js";
+import type { SessionEntity } from "../../entities/session.entity.js";
 
 export default class BaileysSessionRepository implements SessionRepositoryContract {
   async findById(sessionId: string): Promise<Session | null> {
@@ -16,9 +17,9 @@ export default class BaileysSessionRepository implements SessionRepositoryContra
     });
   }
 
-  async findAll(): Promise<Partial<Session>[]> {
+  async findAll(): Promise<SessionEntity[]> {
     return prisma.session.findMany({
-      select: { id: true, sessionName: true, createdAt: true, updatedAt: true }
+      select: { id: true, sessionName: true, creds: true, createdAt: true, updatedAt: true }
     });
   }
 

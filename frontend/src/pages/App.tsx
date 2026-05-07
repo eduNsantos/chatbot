@@ -25,9 +25,9 @@ interface Contact {
 
 interface Message {
     id: string;
-    text: string;
+    content: string;
     fromMe: boolean;
-    time: string;
+    createdAt: string;
 }
 
 const AVATAR_COLORS = ['#e57373', '#42a5f5', '#ab47bc', '#26a69a', '#ff7043', '#66bb6a', '#ffa726', '#8d6e63'];
@@ -121,9 +121,9 @@ export default function App() {
         if (!messageText.trim() || !selectedContactId) return;
         const newMsg: Message = {
             id: Date.now().toString(),
-            text: messageText.trim(),
+            content: messageText.trim(),
             fromMe: true,
-            time: new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
+            createdAt: new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
         };
         setMessages(prev => [...prev, newMsg]);
         setMessageText('');
@@ -226,8 +226,8 @@ export default function App() {
                                     {!messages ? <></> : messages.map(msg => (
                                         <div key={msg.id} className={`flex ${msg.fromMe ? 'justify-end' : 'justify-start'}`}>
                                             <div className={`max-w-xs px-3 py-2 rounded-lg shadow-sm text-sm ${msg.fromMe ? 'bg-[#dcf8c6]' : 'bg-white'}`}>
-                                                <span>{msg.text}</span>
-                                                <span className="text-xs text-gray-400 ml-2">{msg.created_at}</span>
+                                                <span>{msg.content}</span>
+                                                <span className="text-xs text-gray-400 ml-2">{msg.createdAt.toLocaleString()}</span>
                                             </div>
                                         </div>
                                     ))}

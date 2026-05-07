@@ -1,6 +1,6 @@
 export interface Message {
     id: string;
-    text: string;
+    content: string;
     fromMe: boolean;
     createdAt: Date;
     updatedAt: Date;

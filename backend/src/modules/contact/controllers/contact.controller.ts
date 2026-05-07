@@ -1,5 +1,5 @@
 import type { FastifyReply } from "fastify";
-import type { FindAllContactsRequest } from "../@types/contact.types.js";
+import type { FindAllContactsRequest } from "./contact.types.js";
 import type FindAllContactsUseCase from "../use-cases/find-all-contacts.use-case.js";
 import type FindOrCreateContactUseCase from "../use-cases/find-or-create-contact.use-case.js";
 

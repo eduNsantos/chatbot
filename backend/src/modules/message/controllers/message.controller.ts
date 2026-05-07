@@ -1,6 +1,6 @@
 import type { FastifyReply, FastifyRequest } from "fastify";
 import type SendMessageUseCase from "../use-cases/send-message.use-case.js";
-import type { FindMessageByContactRequest, SendMessageRequest } from "../@types/message.types.js";
+import type { FindMessageByContactRequest, SendMessageRequest } from "./message.types.js";
 import SendMessageDto from "../dtos/send-message.dto.js";
 import type ListMessageUseCase from "../use-cases/list-message.use-case.js";
 import type ListMessageByContactUseCase from "../use-cases/list-message.use-case.js";
