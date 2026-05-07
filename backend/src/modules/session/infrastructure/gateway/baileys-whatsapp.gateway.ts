@@ -48,8 +48,6 @@ export default class BaileysWhatsappGateway implements WhatsappGatewayContract {
 
     const me = message.key.fromMe;
 
-    // if (me) return;
-
     const name = message.key.participant || message.pushName || '';
 
     const contact = await this.findOrCreateContactUseCase.execute({
@@ -81,7 +79,7 @@ export default class BaileysWhatsappGateway implements WhatsappGatewayContract {
       rawPayloadJson: safeJSONStringify(message),
       isGroup,
       key,
-      fromMe: false
+      fromMe: me ? true : false
     });
   }
 

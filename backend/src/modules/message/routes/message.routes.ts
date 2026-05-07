@@ -6,5 +6,6 @@ export async function messageRoutes(fastify: FastifyInstance) {
 
   // POST /message
   fastify.post('/', messageController.sendMessage.bind(messageController));
+  fastify.get('/:contactId', messageController.listMessageByContact.bind(messageController));
 }
 

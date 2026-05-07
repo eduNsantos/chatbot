@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { use, useEffect, useState } from "react";
 import api from "../utils/api";
 
 const SESSION_ID = 'dd2e1e17-3ed1-4121-9650-70ed3e9abba0';
@@ -76,22 +76,42 @@ export default function App() {
     const [selectedContactId, setSelectedContactId] = useState<string | null>(null);
     const [search, setSearch] = useState('');
     const [iaEnabled, setIaEnabled] = useState(false);
-
-    useEffect(() => {
-        api.get<ApiContact[]>(`/sessions/${SESSION_ID}/contacts`)
-            .then(res => {
-                const filtered = res.data.filter(c => !c.isGroup && c.whatsappNumber !== 'status');
-                setContacts(filtered.map(toContact));
-                if (filtered.length > 0) setSelectedContactId(String(filtered[0].id));
-            })
-            .finally(() => setLoadingContacts(false));
-    }, []);
     const [messageText, setMessageText] = useState('');
     const [prompt, setPrompt] = useState('Você é um assistente atencioso. Responda de forma curta, educada e em português.');
-    const [messages, setMessages] = useState<Record<string, Message[]>>({});
+    const [messages, setMessages] = useState<Message[]>([]);
 
     const selectedContact = contacts.find(c => c.id === selectedContactId);
-    const currentMessages = selectedContactId ? (messages[selectedContactId] ?? []) : [];
+
+    useEffect(() => {
+        function fetchContacts() {
+            api.get<ApiContact[]>(`/sessions/${SESSION_ID}/contacts`)
+                .then(res => {
+                    const filtered = res.data.filter(c => !c.isGroup && c.whatsappNumber !== 'status');
+                    setContacts(filtered.map(toContact));
+                    if (filtered.length > 0) setSelectedContactId(String(filtered[0].id));
+                })
+                .finally(() => setLoadingContacts(false));
+
+        }
+
+        fetchContacts();
+    }, []);
+
+    useEffect(() => {
+
+        if (!selectedContactId) {
+            return;
+        }
+        api.get(`/sessions/${SESSION_ID}/message/${selectedContactId}`).then(res => {
+            const msgs: Message[] = res.data.map((m: any) => ({
+                id: String(m.id),
+                text: m.content,
+                fromMe: m.fromMe,
+                time: new Date(m.createdAt).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
+            }));
+            setMessages(msgs);
+        });
+    }, [selectedContactId]);
 
     const filteredContacts = contacts.filter(c =>
         c.name.toLowerCase().includes(search.toLowerCase())
@@ -105,10 +125,7 @@ export default function App() {
             fromMe: true,
             time: new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
         };
-        setMessages(prev => ({
-            ...prev,
-            [selectedContactId]: [...(prev[selectedContactId] ?? []), newMsg],
-        }));
+        setMessages(prev => [...prev, newMsg]);
         setMessageText('');
     }
 
@@ -206,11 +223,11 @@ export default function App() {
                             {/* Messages area */}
                             <div className="flex-1 overflow-y-auto p-5" style={{ backgroundColor: '#e8f5e1' }}>
                                 <div className="flex flex-col gap-2">
-                                    {currentMessages.map(msg => (
+                                    {!messages ? <></> : messages.map(msg => (
                                         <div key={msg.id} className={`flex ${msg.fromMe ? 'justify-end' : 'justify-start'}`}>
                                             <div className={`max-w-xs px-3 py-2 rounded-lg shadow-sm text-sm ${msg.fromMe ? 'bg-[#dcf8c6]' : 'bg-white'}`}>
                                                 <span>{msg.text}</span>
-                                                <span className="text-xs text-gray-400 ml-2">{msg.time}</span>
+                                                <span className="text-xs text-gray-400 ml-2">{msg.created_at}</span>
                                             </div>
                                         </div>
                                     ))}

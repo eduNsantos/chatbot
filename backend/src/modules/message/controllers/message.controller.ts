@@ -1,10 +1,21 @@
 import type { FastifyReply, FastifyRequest } from "fastify";
 import type SendMessageUseCase from "../use-cases/send-message.use-case.js";
-import type { SendMessageRequest } from "../@types/message.types.js";
+import type { FindMessageByContactRequest, SendMessageRequest } from "../@types/message.types.js";
 import SendMessageDto from "../dtos/send-message.dto.js";
+import type ListMessageUseCase from "../use-cases/list-message.use-case.js";
+import type ListMessageByContactUseCase from "../use-cases/list-message.use-case.js";
 
 export default class MessageController {
-    public constructor(private sendMessageUseCase: SendMessageUseCase) {}
+    public constructor(
+        private sendMessageUseCase: SendMessageUseCase,
+        private listMessageByContactUseCase: ListMessageByContactUseCase
+    ) {}
+
+    async listMessageByContact(req: FindMessageByContactRequest, res: FastifyReply) {
+        const messages = await this.listMessageByContactUseCase.execute(req.params.contactId);
+
+        return res.send(messages);
+    }
 
     async sendMessage(req: SendMessageRequest, res: FastifyReply) {
         try {

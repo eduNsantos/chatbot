@@ -1,5 +1,5 @@
 import makeFindOrCreateContactUseCase from "../../contact/factories/make-find-or-create-contact-use-cases.factory.js";
-import MessageRepository from "../../message/routes/message.repository.js";
+import MessageRepository from "../../message/infrastructure/repositories/message.repository.js";
 import CreateMessageUseCase from "../../message/use-cases/create-message.use-case.js";
 import BaileysWhatsappGateway from "../infrastructure/gateway/baileys-whatsapp.gateway.js";
 import { BaileysSessionKeyRepository } from "../infrastructure/repositories/baileys-session-key.repository.js";

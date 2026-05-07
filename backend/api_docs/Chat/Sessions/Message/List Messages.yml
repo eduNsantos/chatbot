@@ -1,0 +1,22 @@
+info:
+  name: List Messages
+  type: http
+  seq: 2
+
+http:
+  method: POST
+  url: http://localhost:3000/sessions/337f3ccc-7f35-4463-a8b5-68ed79e2646b/message
+  body:
+    type: json
+    data: |-
+      {
+        "to": "5511954318786@s.whatsapp.net",
+        "message": "Como você está?"
+      }
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

@@ -11,3 +11,16 @@ export type SendMessageRequest = FastifyRequest<{
     };
 }>;
 
+
+export type FindMessageByContactRequest = FastifyRequest<{
+    Params: {
+        sessionId: string;
+        contactId: number;
+    };
+    Body: {
+        to: string;
+        type: 'person' | 'group';
+        message: string;
+    };
+}>;
+
