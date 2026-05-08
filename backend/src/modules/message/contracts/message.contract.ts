@@ -8,6 +8,7 @@ type CreateMessage = {
     sessionId: string;
     type: string;
     message: string;
+    occurredAt?: Date;
     rawPayloadJson?: string;
     mediaUrl?: string;
     isGroup: boolean;

@@ -30,7 +30,7 @@ export default class SendMessageUseCase {
         const contact = await this.findOrCreateContactUseCase.execute({
             whatsappId: formattedTo,
             whatsappNumber: rawNumber,
-            name: '',
+            name: dto.name ?? formattedTo,
             sessionId
         });
 

@@ -50,6 +50,12 @@ export default class BaileysWhatsappGateway implements WhatsappGatewayContract {
 
     const name = message.key.participant || message.pushName || '';
 
+    const text =
+      message.message.conversation ||
+      message.message.extendedTextMessage?.text;
+
+    if (!text) return;
+
     console.log(`Mensagem recebida de ${name} (${whatsappNumber} - Session ${sessionId})`);
 
     const contact = await this.findOrCreateContactUseCase.execute({
@@ -59,25 +65,21 @@ export default class BaileysWhatsappGateway implements WhatsappGatewayContract {
       whatsappNumber
     });
 
-    const text =
-      message.message.conversation ||
-      message.message.extendedTextMessage?.text;
-
-    if (!text) return;
-
     const key = message.key.id;
-
-    console.log(message)
 
     if (!key) return;
 
     const parsedType = Object.keys(message.message)[0] || event.type;
+    const occurredAt = message.messageTimestamp
+      ? new Date(Number(message.messageTimestamp) * 1000)
+      : new Date();
 
     await this.createMessageUseCase.execute({
       contactId: contact.id,
       sessionId,
       type: parsedType,
       message: text,
+      occurredAt,
       rawPayloadJson: safeJSONStringify(message),
       isGroup,
       key,

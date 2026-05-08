@@ -1,5 +1,6 @@
-import { use, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import api from "../utils/api";
+import realtimeSocket from "../utils/realtime";
 
 const SESSION_ID = '4fd0f43a-5ec0-4903-90c9-cc4e3da9927f';
 
@@ -11,6 +12,7 @@ interface ApiContact {
     pictureUrl: string | null;
     name: string;
     isGroup: boolean;
+    lastMessageAt?: string | null;
 }
 
 interface Contact {
@@ -21,6 +23,8 @@ interface Contact {
     date: string;
     hasIA: boolean;
     avatarColor: string;
+    whatsappId: string;
+    lastMessageAt: string | null;
 }
 
 interface Message {
@@ -30,18 +34,73 @@ interface Message {
     createdAt: string;
 }
 
+interface MessageNotification {
+    contactId: number;
+    sessionId: string;
+    message: string;
+    fromMe: boolean;
+    type: string;
+    key: string;
+    createdAt: string;
+}
+
+interface ContactNotification {
+    id: number;
+    sessionId: string;
+    whatsappId: string;
+    whatsappNumber: string | null;
+    pictureUrl: string | null;
+    name: string | null;
+    isGroup: boolean;
+    lastMessageAt: string | null;
+    createdAt: string;
+    updatedAt: string;
+}
+
 const AVATAR_COLORS = ['#e57373', '#42a5f5', '#ab47bc', '#26a69a', '#ff7043', '#66bb6a', '#ffa726', '#8d6e63'];
 
 function toContact(c: ApiContact): Contact {
+    const lastMessageAt = c.lastMessageAt ?? null;
+
     return {
         id: String(c.id),
         name: c.name?.trim() || c.whatsappNumber,
         phone: c.whatsappNumber,
         lastMessage: '',
-        date: '',
+        date: formatTime(lastMessageAt),
         hasIA: false,
         avatarColor: AVATAR_COLORS[c.id % AVATAR_COLORS.length],
+        whatsappId: c.whatsappId,
+        lastMessageAt,
     };
+}
+
+function formatTime(value: string | null): string {
+    if (!value) {
+        return '';
+    }
+
+    return new Date(value).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+}
+
+function sortContactsByLastMessage(contacts: Contact[]): Contact[] {
+    return [...contacts].sort((left, right) => {
+        const leftTime = left.lastMessageAt ? new Date(left.lastMessageAt).getTime() : 0;
+        const rightTime = right.lastMessageAt ? new Date(right.lastMessageAt).getTime() : 0;
+
+        if (rightTime !== leftTime) {
+            return rightTime - leftTime;
+        }
+
+        return Number(right.id) - Number(left.id);
+    });
+}
+
+function upsertContact(currentContacts: Contact[], incoming: Contact): Contact[] {
+    const nextContacts = currentContacts.filter(contact => contact.id !== incoming.id);
+    nextContacts.push(incoming);
+
+    return sortContactsByLastMessage(nextContacts);
 }
 
 
@@ -87,8 +146,9 @@ export default function App() {
             api.get<ApiContact[]>(`/sessions/${SESSION_ID}/contacts`)
                 .then(res => {
                     const filtered = res.data.filter(c => !c.isGroup && c.whatsappNumber !== 'status');
-                    setContacts(filtered.map(toContact));
-                    if (filtered.length > 0) setSelectedContactId(String(filtered[0].id));
+                    const nextContacts = sortContactsByLastMessage(filtered.map(toContact));
+                    setContacts(nextContacts);
+                    if (nextContacts.length > 0) setSelectedContactId(String(nextContacts[0].id));
                 })
                 .finally(() => setLoadingContacts(false));
 
@@ -105,27 +165,123 @@ export default function App() {
         api.get(`/sessions/${SESSION_ID}/message/${selectedContactId}`).then(res => {
             const msgs: Message[] = res.data.map((m: any) => ({
                 id: String(m.id),
-                text: m.content,
+                content: m.content,
                 fromMe: m.fromMe,
-                time: new Date(m.createdAt).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
+                createdAt: new Date(m.createdAt).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
             }));
             setMessages(msgs);
         });
+    }, []);
+
+    useEffect(() => {
+        realtimeSocket.emit('session:join', SESSION_ID);
+
+        const handleContactUpsert = (payload: ContactNotification) => {
+            if (payload.sessionId !== SESSION_ID || payload.isGroup || payload.whatsappNumber === 'status') {
+                return;
+            }
+
+            const incomingContact: Contact = {
+                id: String(payload.id),
+                name: payload.name?.trim() || payload.whatsappNumber || payload.whatsappId,
+                phone: payload.whatsappNumber || payload.whatsappId,
+                lastMessage: '',
+                date: formatTime(payload.lastMessageAt),
+                hasIA: false,
+                avatarColor: AVATAR_COLORS[payload.id % AVATAR_COLORS.length],
+                whatsappId: payload.whatsappId,
+                lastMessageAt: payload.lastMessageAt,
+            };
+
+            setContacts(prev => {
+                const nextContacts = upsertContact(prev, incomingContact);
+
+                if (!selectedContactId && nextContacts.length > 0) {
+                    setSelectedContactId(nextContacts[0].id);
+                }
+
+                return nextContacts;
+            });
+        };
+
+        const handleSessionMessage = (payload: MessageNotification) => {
+            if (payload.sessionId !== SESSION_ID) {
+                return;
+            }
+
+            setContacts(prev => {
+                const current = prev.find(contact => contact.id === String(payload.contactId));
+
+                if (!current) {
+                    return prev;
+                }
+
+                return upsertContact(prev, {
+                    ...current,
+                    lastMessage: payload.message,
+                    date: formatTime(payload.createdAt),
+                    lastMessageAt: payload.createdAt,
+                });
+            });
+        };
+
+        realtimeSocket.on('session:contact:upsert', handleContactUpsert);
+        realtimeSocket.on('session:message:new', handleSessionMessage);
+
+        return () => {
+            realtimeSocket.emit('session:leave', SESSION_ID);
+            realtimeSocket.off('session:contact:upsert', handleContactUpsert);
+            realtimeSocket.off('session:message:new', handleSessionMessage);
+        };
+    }, [selectedContactId]);
+
+    useEffect(() => {
+        if (!selectedContactId) {
+            return;
+        }
+
+        const numericContactId = Number(selectedContactId);
+        realtimeSocket.emit('contact:join', numericContactId);
+
+        const handleNewMessage = (payload: MessageNotification) => {
+            if (payload.contactId !== numericContactId) {
+                return;
+            }
+
+            setMessages(prev => [
+                ...prev,
+                {
+                    id: payload.key,
+                    content: payload.message,
+                    fromMe: payload.fromMe,
+                    createdAt: new Date(payload.createdAt).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
+                }
+            ]);
+        };
+
+        realtimeSocket.on('message:new', handleNewMessage);
+
+        return () => {
+            realtimeSocket.emit('contact:leave', numericContactId);
+            realtimeSocket.off('message:new', handleNewMessage);
+        };
     }, [selectedContactId]);
 
     const filteredContacts = contacts.filter(c =>
         c.name.toLowerCase().includes(search.toLowerCase())
     );
 
-    function handleSendMessage() {
-        if (!messageText.trim() || !selectedContactId) return;
-        const newMsg: Message = {
-            id: Date.now().toString(),
-            content: messageText.trim(),
-            fromMe: true,
-            createdAt: new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
-        };
-        setMessages(prev => [...prev, newMsg]);
+    async function handleSendMessage() {
+        if (!messageText.trim() || !selectedContact) {
+            return;
+        }
+
+        await api.post(`/sessions/${SESSION_ID}/message`, {
+            message: messageText.trim(),
+            to: contacts.find(c => c.id === selectedContactId)?.whatsappId,
+            type: 'person'
+        });
+
         setMessageText('');
     }
 

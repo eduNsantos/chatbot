@@ -2,12 +2,15 @@ import cors from '@fastify/cors';
 import Fastify from 'fastify';
 import { sessionRoutes } from './modules/session/routes/session.routes.js';
 import { bootstrap } from './bootstrap.js';
+import { initRealtime } from './shared/realtime/socket.js';
 
 const app = Fastify();
 
 await app.register(cors, {
   origin: '*'
 });
+
+initRealtime(app.server);
 
 const { controllers, whatsappGateway, sessionRepository, createSessionUseCase } = bootstrap();
 

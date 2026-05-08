@@ -46,6 +46,7 @@
     "rolldown": "^1.0.0-rc.17",
     "safe-buffer": "^5.1.2",
     "source-map-js": "^1.2.1",
+    "socket.io-client": "^4.8.1",
     "sqlstring": "^2.3.1",
     "string_decoder": "^1.1.1",
     "supports-preserve-symlinks-flag": "^1.0.0",
