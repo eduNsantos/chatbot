@@ -7,7 +7,9 @@ import { initRealtime } from './shared/realtime/socket.js';
 const app = Fastify();
 
 await app.register(cors, {
-  origin: '*'
+    origin: '*',
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization']
 });
 
 initRealtime(app.server);

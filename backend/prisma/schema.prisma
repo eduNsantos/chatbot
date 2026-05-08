@@ -22,8 +22,20 @@ model Session {
   keys SessionKey[]
   contacts Contact[]
   messages Message[]
+  agents SessionAgent[]
 }
 
+
+model SessionAgent {
+  id        Int    @id @default(autoincrement())
+  sessionId String
+  name      String
+  config    Json
+
+  session Session @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+
+  @@unique([sessionId, name])
+}
 model SessionKey {
   id        Int    @id @default(autoincrement())
   sessionId String

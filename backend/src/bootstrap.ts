@@ -17,16 +17,23 @@ import CreateSessionUseCase from "./modules/session/use-cases/create-session.use
 import SessionsListUseCase from "./modules/session/use-cases/sessions-list.use-case.js";
 import SessionUpdateUseCase from "./modules/session/use-cases/session-update.use-case.js";
 import SessionController from "./modules/session/controlllers/session.controller.js";
+import UpsertSessionAgentUseCase from "./modules/session-agent/use-cases/upsert-session-agent.use-case.js";
+import SessionAgentRepository from "./modules/session-agent/infrastructure/prisma/session-agent-repository.repository.js";
+import FindSessionAgentUseCase from "./modules/session-agent/use-cases/find-session-agent.use-case.js";
+import SessionAgentController from "./modules/session-agent/controllers/session-agent-controller.js";
 
 export interface AppDependencies {
     controllers: {
         sessionController: SessionController;
         contactController: ContactController;
         messageController: MessageController;
+        sessionAgentController: SessionAgentController;
     };
     whatsappGateway: BaileysWhatsappGateway;
     sessionRepository: BaileysSessionRepository;
     createSessionUseCase: CreateSessionUseCase;
+    upsertSessionAgentUseCase: UpsertSessionAgentUseCase;
+    findSessionAgentUseCase: FindSessionAgentUseCase;
 }
 
 export function bootstrap(): AppDependencies {
@@ -34,6 +41,8 @@ export function bootstrap(): AppDependencies {
     const contactRepository = new ContactRepository();
     const messageRepository = new MessageRepository();
     const sessionRepository = new BaileysSessionRepository();
+    const sessionAgentRepository = new SessionAgentRepository();
+
     new BaileysSessionKeyRepository(); // instanciado para efeitos colaterais de inicialização
 
     // 2. Use cases de contact
@@ -56,15 +65,24 @@ export function bootstrap(): AppDependencies {
     const sessionsListUseCase = new SessionsListUseCase(sessionRepository);
     const sessionUpdateUseCase = new SessionUpdateUseCase(sessionRepository);
 
+    // Use cases de session agent
+
+    const findSessionAgentUseCase = new FindSessionAgentUseCase(sessionAgentRepository);
+    const upsertSessionAgentUseCase = new UpsertSessionAgentUseCase(sessionAgentRepository);
+
     // 7. Controllers
     const contactController = new ContactController(findOrCreateContactUseCase, findAllContactsUseCase);
     const messageController = new MessageController(sendMessageUseCase, listMessageByContactUseCase);
     const sessionController = new SessionController(sessionsListUseCase, sessionUpdateUseCase);
+    const sessionAgentController = new SessionAgentController(findSessionAgentUseCase, upsertSessionAgentUseCase);
+
 
     return {
-        controllers: { sessionController, contactController, messageController },
+        controllers: { sessionController, contactController, messageController, sessionAgentController },
         whatsappGateway,
         sessionRepository,
         createSessionUseCase,
+        upsertSessionAgentUseCase,
+        findSessionAgentUseCase
     };
 }

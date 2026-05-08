@@ -154,7 +154,18 @@ export default function App() {
 
         }
 
+        function fetchPrompt() {
+            api.get<{ config: {
+                prompt: string
+            } }>(`/sessions/${SESSION_ID}/agent`).then(res => {
+                setPrompt(res.data.config.prompt);
+                // setPrompt(res.data.prompt);
+            });
+        }
+
         fetchContacts();
+        fetchPrompt();
+
     }, []);
 
     useEffect(() => {
@@ -162,6 +173,7 @@ export default function App() {
         if (!selectedContactId) {
             return;
         }
+
         api.get(`/sessions/${SESSION_ID}/message/${selectedContactId}`).then(res => {
             const msgs: Message[] = res.data.map((m: any) => ({
                 id: String(m.id),
@@ -283,6 +295,12 @@ export default function App() {
         });
 
         setMessageText('');
+    }
+
+    function updateAgentPrompt(newPrompt: string) {
+        api.put(`/sessions/${SESSION_ID}/agent`, {
+            prompt: newPrompt
+        });
     }
 
     return (
@@ -435,7 +453,10 @@ export default function App() {
                             className="flex-1 resize-none text-sm text-gray-700 border border-gray-200 rounded-lg p-3 outline-none focus:border-green-400 transition-colors"
                             placeholder="Escreva o prompt da IA aqui..."
                         />
-                        <button className="flex items-center justify-center gap-2 w-full py-2.5 bg-green-500 text-white text-sm font-semibold rounded-lg hover:bg-green-600 transition-colors">
+                        <button
+                            onClick={() => updateAgentPrompt(prompt)}
+                            className="flex items-center justify-center gap-2 w-full py-2.5 bg-green-500 text-white text-sm font-semibold rounded-lg hover:bg-green-600 transition-colors"
+                        >
                             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"/>
                             </svg>

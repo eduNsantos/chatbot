@@ -1,0 +1,27 @@
+info:
+  name: Update agent
+  type: http
+  seq: 1
+
+http:
+  method: PUT
+  url: http://localhost:3000/sessions/{{sessionId}}/agent
+  body:
+    type: json
+    data: |-
+      {
+        "prompt": "Olá!"
+        
+      }
+  auth: inherit
+
+runtime:
+  variables:
+    - name: sessionId
+      value: 4fd0f43a-5ec0-4903-90c9-cc4e3da9927f
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
