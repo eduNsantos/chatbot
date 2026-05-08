@@ -1,7 +1,7 @@
 import cors from '@fastify/cors';
 import Fastify from 'fastify';
 import { sessionRoutes } from './modules/session/routes/session.routes.js';
-import loadSessions from './modules/session/factories/load-sessions.js';
+import { bootstrap } from './bootstrap.js';
 
 const app = Fastify();
 
@@ -9,8 +9,26 @@ await app.register(cors, {
   origin: '*'
 });
 
-loadSessions();
+const { controllers, whatsappGateway, sessionRepository, createSessionUseCase } = bootstrap();
 
-await app.register(sessionRoutes, { prefix: '/sessions' });
+// Carrega sessões existentes do banco ao iniciar
+const sessions = await sessionRepository.findAll();
+if (sessions.length === 0) {
+    console.log('No sessions found. Creating default session "default".');
+    createSessionUseCase.execute({ sessionName: 'default' }).catch(err => {
+        console.error('Failed to create default session:', err);
+    });
+} else {
+    sessions.forEach(session => {
+        whatsappGateway.createSession(session.id).catch(err => {
+            console.error(`Failed to restore session ${session.id}:`, err);
+        });
+    });
+}
+
+await app.register(sessionRoutes, {
+    prefix: '/sessions',
+    ...controllers,
+});
 
 export default app;

@@ -1,11 +1,14 @@
 import type { FastifyInstance } from 'fastify';
-import makeMessageController from '../factories/make-message-repository.factory.js';
+import type MessageController from '../controllers/message.controller.js';
 
-export async function messageRoutes(fastify: FastifyInstance) {
-  const messageController = makeMessageController();
+export interface MessageRoutesOptions {
+    messageController: MessageController;
+}
 
-  // POST /message
-  fastify.post('/', messageController.sendMessage.bind(messageController));
-  fastify.get('/:contactId', messageController.listMessageByContact.bind(messageController));
+export async function messageRoutes(fastify: FastifyInstance, options: MessageRoutesOptions) {
+    const { messageController } = options;
+
+    fastify.post('/', messageController.sendMessage.bind(messageController));
+    fastify.get('/:contactId', messageController.listMessageByContact.bind(messageController));
 }
 

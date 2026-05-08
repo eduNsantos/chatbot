@@ -1,7 +1,7 @@
 import { use, useEffect, useState } from "react";
 import api from "../utils/api";
 
-const SESSION_ID = 'dd2e1e17-3ed1-4121-9650-70ed3e9abba0';
+const SESSION_ID = '4fd0f43a-5ec0-4903-90c9-cc4e3da9927f';
 
 interface ApiContact {
     id: number;
@@ -227,7 +227,7 @@ export default function App() {
                                         <div key={msg.id} className={`flex ${msg.fromMe ? 'justify-end' : 'justify-start'}`}>
                                             <div className={`max-w-xs px-3 py-2 rounded-lg shadow-sm text-sm ${msg.fromMe ? 'bg-[#dcf8c6]' : 'bg-white'}`}>
                                                 <span>{msg.content}</span>
-                                                <span className="text-xs text-gray-400 ml-2">{msg.createdAt.toLocaleString()}</span>
+                                                <span className="text-xs text-gray-400 ml-2">{msg.createdAt}</span>
                                             </div>
                                         </div>
                                     ))}

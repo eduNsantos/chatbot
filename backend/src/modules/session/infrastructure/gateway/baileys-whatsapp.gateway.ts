@@ -4,6 +4,7 @@ import makeWASocket, {
   type WAMessage,
   type WASocket
 } from "@whiskeysockets/baileys";
+import pino from "pino";
 
 import qrcode from 'qrcode-terminal';
 import { usePrismaAuth } from "./helpers/use-prisma-auth.helper.js";
@@ -33,7 +34,7 @@ export default class BaileysWhatsappGateway implements WhatsappGatewayContract {
 
     if (!message?.message) return;
 
-    const from = message.key.remoteJid || '';
+    const from = message.key.remoteJidAlt || message.key.remoteJid || '';
     const whatsappNumber = from.split('@')[0]?.toString() || '';
 
     if (!from || !whatsappNumber) return;
@@ -48,6 +49,8 @@ export default class BaileysWhatsappGateway implements WhatsappGatewayContract {
     const me = message.key.fromMe;
 
     const name = message.key.participant || message.pushName || '';
+
+    console.log(`Mensagem recebida de ${name} (${whatsappNumber} - Session ${sessionId})`);
 
     const contact = await this.findOrCreateContactUseCase.execute({
       whatsappId: from,
@@ -94,7 +97,8 @@ export default class BaileysWhatsappGateway implements WhatsappGatewayContract {
 
     const socket = makeWASocket({
       version,
-      auth: state
+      auth: state,
+      logger: pino({ level: 'error' })
     }) as ExtendedWASocket;
 
     socket.id = sessionId;
@@ -136,6 +140,7 @@ export default class BaileysWhatsappGateway implements WhatsappGatewayContract {
     });
 
     socket.ev.on('messages.upsert', ev => {
+      console.log('📩 Nova mensagem recebida');
       void this.onMessageReceived(socket.id, ev);
     });
 

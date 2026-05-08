@@ -1,8 +1,12 @@
 import type { FastifyInstance } from "fastify";
-import makeContactController from "../factories/make-contact-controller.factory.js";
+import type ContactController from "../controllers/contact.controller.js";
 
-export async function contactRoutes(fastify: FastifyInstance) {
-  const contactController = makeContactController();
+export interface ContactRoutesOptions {
+    contactController: ContactController;
+}
 
-  fastify.get("/", contactController.findAll.bind(contactController));
+export async function contactRoutes(fastify: FastifyInstance, options: ContactRoutesOptions) {
+    const { contactController } = options;
+
+    fastify.get("/", contactController.findAll.bind(contactController));
 }

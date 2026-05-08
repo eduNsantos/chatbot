@@ -23,27 +23,27 @@ export default class ContactRepository implements ContactRepositoryContract {
     }
 
     async findOrCreate(contact: FindOrCreateContactDTO): Promise<ContactEntity> {
-        const result = await prisma.contact.upsert({
+        console.log(contact)
+
+        let result = await prisma.contact.findUnique({
             where: {
                 sessionId_whatsappId: {
                     sessionId: contact.sessionId,
                     whatsappId: contact.whatsappId
                 }
-            },
-            update: {
-                name: contact.name,
-                whatsappNumber: contact.whatsappNumber,
-                pictureUrl: contact.pictureUrl ?? null,
-                sessionId: contact.sessionId
-            },
-            create: {
-                name: contact.name,
-                whatsappNumber: contact.whatsappNumber,
-                pictureUrl: contact.pictureUrl ?? null,
-                sessionId: contact.sessionId,
-                whatsappId: contact.whatsappId,
             }
         });
+
+        if (!result) {
+            result = await prisma.contact.create({
+                data: {
+                    name: contact.name,
+                    pictureUrl: contact.pictureUrl ?? null,
+                    sessionId: contact.sessionId,
+                    whatsappId: contact.whatsappId,
+                }
+            });
+        }
 
         return result;
     }

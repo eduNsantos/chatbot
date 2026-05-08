@@ -7,6 +7,7 @@ export default class ContactUpdateUseCase {
     ) {}
 
     async execute(contactDto: UpdateContactDTO): Promise<void> {
+        const updateData: Partial<UpdateContactDTO> = {};
 
         if (contactDto.name !== undefined) {
             updateData.name = contactDto.name;
@@ -19,7 +20,8 @@ export default class ContactUpdateUseCase {
         }
 
         await this.contactRepository.updateContact({
-            id: contactDto.id
+            id: contactDto.id,
+            ...updateData
         });
     }
 
